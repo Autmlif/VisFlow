@@ -6,8 +6,8 @@ import os
 from PyQt5.QtCore import Qt
 
 os.environ["QT_API"] = "pyqt5"
-from UI.File.Vis4Flow import TecplotSzplt as tecplt
-from UI.File.Vis4Flow.visDialog import ContoursOptionDialog
+import TecplotSzplt as tecplt
+from visDialog import ContoursOptionDialog
 
 from qtpy import QtWidgets
 

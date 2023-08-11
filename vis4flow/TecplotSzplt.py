@@ -1,5 +1,5 @@
 import pyvista
-from UI.File.Vis4Flow import pytecio
+import pytecio
 import numpy as np
 from pyvista import CellType
 #

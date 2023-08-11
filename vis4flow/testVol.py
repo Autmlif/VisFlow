@@ -3,7 +3,7 @@ import sys
 # Setting the Qt bindings for QtPy
 import os
 
-from UI.File.Vis4Flow.VisWindow import VisWindow
+from VisWindow import VisWindow
 
 os.environ["QT_API"] = "pyqt5"
 
