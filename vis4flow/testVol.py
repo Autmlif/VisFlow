@@ -27,16 +27,24 @@ class MyMainWindow(MainWindow):
         # menu
         mainMenu = self.menuBar()
         # draw
-        meshMenu = mainMenu.addMenu('draw')
-        self.draw_action = QtWidgets.QAction('draw', self)
+        meshMenu = mainMenu.addMenu('Draw')
+        self.draw_action = QtWidgets.QAction('Mesh', self)
+        self.draw_action.triggered.connect(lambda: self.drawAction("mesh"))
         meshMenu.addAction(self.draw_action)
-        self.draw_action.triggered.connect(self.drawAction)
+
+        self.draw_action_2 = QtWidgets.QAction('Iso-Surfaces', self)
+        self.draw_action_2.triggered.connect(lambda: self.drawAction("contour"))
+        meshMenu.addAction(self.draw_action_2)
+
+        self.draw_action_3 = QtWidgets.QAction('Volume', self)
+        self.draw_action_3.triggered.connect(lambda: self.drawAction("volume"))
+        meshMenu.addAction(self.draw_action_3)
         # self.drawAction()
 
         self.show()
 
-    def drawAction(self):
-        self.visWin.drawDialg()
+    def drawAction(self, mesh):
+        self.visWin.drawDialg(mesh)
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
