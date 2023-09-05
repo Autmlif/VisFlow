@@ -74,13 +74,12 @@ class VisWindow(MainWindow):
             self.mDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
             self.mDemo.show()
         elif draw_type == 'contour':
-            if self.mesh_drawn == 0:
-                msg_box = QMessageBox(QMessageBox.Information, '提示', '请先选择绘制的场和变量。')
-                msg_box.exec_()
-            else:
-                self.cDemo = ContoursDataPlotOptionDialog(data_range=self.mesh_range, call_back_draw=self.paint_contour)
-                self.cDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
-                self.cDemo.show()
+            # if self.mesh_drawn == 0:
+            #     msg_box = QMessageBox(QMessageBox.Information, '提示', '请先选择绘制的场和变量。')
+            #     msg_box.exec_()
+            self.cDemo = ContoursDataPlotOptionDialog(varNames=varNames, zoneNames=zonenames, call_back_draw=self.paint_contour)
+            self.cDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
+            self.cDemo.show()
         elif draw_type == 'volume':
             self.vDemo = VolumePlotOptionDialog(call_back_draw=self.paint_volume)
             self.vDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
@@ -98,18 +97,9 @@ class VisWindow(MainWindow):
         )
         self.plotter.clear()
 
-        self.mesh_data = []
-        mesh_range_min = []
-        mesh_range_max = []
         for zoneName in data["zoneName"]:
             mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
             mesh.set_active_scalars(data["varName"], preference='cell')  # 切换不同的变量，即不同的场
-
-            # 求出数据范围
-            scalar_min = mesh.active_scalars.min()
-            scalar_max = mesh.active_scalars.max()
-            mesh_range_min.append(scalar_min)
-            mesh_range_max.append(scalar_max)
 
             # voxels = pv.voxelize(mesh, density=0.005)
             # voxels.compute_implicit_distance(mesh, inplace=True)
@@ -123,6 +113,13 @@ class VisWindow(MainWindow):
             #slices = mesh.slice_orthogonal(x=0.5, y=0.5, z=0.5)
             #self.plotter.add_mesh(slices, cmap=mpl.colormaps[data["colormap"]])
             # mesh['scalars']=data["varName"]
+
+            # slices = mesh.slice_orthogonal()
+            # self.plotter.add_mesh(slices, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
+            #                       log_scale=data['log_scale'], style=data['style'],
+            #                       smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
+
+
             self.plotter.add_mesh(mesh, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
                                   log_scale=data['log_scale'], style=data['style'],
                                   smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
@@ -132,9 +129,8 @@ class VisWindow(MainWindow):
             #                         diffuse=1, log_scale=data['log_scale'],
             #                         e=0.0001)
         # self.plotter.add_mesh_slice(mesh, normal='z')
-            self.mesh_data.append(mesh)
 
-        self.mesh_range = [math.floor(min(mesh_range_min)), math.ceil(max(mesh_range_max))]
+        #self.mesh_range = [math.floor(min(mesh_range_min)), math.ceil(max(mesh_range_max))]
 
         self.plotter.reset_camera()
         self.mesh_drawn = 1
@@ -142,13 +138,29 @@ class VisWindow(MainWindow):
     def paint_contour(self, data):
         print(data)
 
-        if not data['display_mesh']:
-            self.plotter.clear()
+        self.scalar_bar_args = dict(
+            interactive=True, title_font_size=20, label_font_size=16,
+            shadow=True, n_labels=data['colormapsize'],
+            italic=True, font_family="arial",
+            width=0.01, height=0.5
+        )
+        self.plotter.clear()
 
-        for mesh in self.mesh_data:
+        for zoneName in data["zoneName"]:
+            mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
+            mesh.set_active_scalars(data["varName"], preference='cell')  # 切换不同的变量，即不同的场
+
+            # 求出颜色条范围
+            scalar_min = mesh.active_scalars.min()
+            scalar_max = mesh.active_scalars.max()
+            unit_range = (scalar_min + scalar_max) / 10  # 每一格的数据量
+            clim_range = [scalar_min+unit_range*data['iso_range'][0], scalar_min+unit_range*data['iso_range'][1]]
+
             mesh_points = mesh.cell_data_to_point_data()
             contours = mesh_points.contour(data['iso_numbers']) if data['specify_iso'] else mesh_points.contour()
-            self.plotter.add_mesh(contours, opacity=data['opacity'], clim=data['iso_range'])
+            self.plotter.add_mesh(contours, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
+                                  log_scale=data['log_scale'], style=data['style'],
+                                  smooth_shading=data['smooth'], opacity=data['opacity'], clim=clim_range, scalar_bar_args=self.scalar_bar_args)
         self.plotter.reset_camera()
 
     def paint_volume(self, data):
@@ -156,7 +168,7 @@ class VisWindow(MainWindow):
         self.plotter.clear()
         for mesh in self.mesh_data:
             voxels = calculate_neighbours(mesh, data['voxel_size'])
-            self.plotter.add_mesh_threshold(voxels, show_edges=data['display_grid'], opacity=data['opacity'])
+            self.plotter.add_mesh(voxels, opacity=data['opacity'], scalar_bar_args=self.scalar_bar_args)
         self.plotter.reset_camera()
 
 # 计算体素半径
@@ -185,7 +197,7 @@ def calculate_neighbours(mesh, voxel_size=0.01):
     neighbour_count = np.array(neighbour_count, dtype=np.float32)
     neighbour_density =  neighbour_count/neighbour_count.max()
     # Add the density as a field to the voxels
-    voxels['density'] = neighbour_density
+    voxels['v_density'] = neighbour_density
 
     return voxels
 
