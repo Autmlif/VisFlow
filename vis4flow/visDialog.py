@@ -240,8 +240,9 @@ class ContoursDataPlotOptionDialog(QDialog):
                 }
         self.draw_handler(data)
 
+
 class VolumePlotOptionDialog(QDialog):
-    def __init__(self, call_back_draw=None, parent=None):
+    def __init__(self, varNames=[], zoneNames=[], call_back_draw=None, parent=None):
         super(VolumePlotOptionDialog, self).__init__(parent)
         # self.setMinimumSize(500, 450)
         # self.setMaximumSize(700, 650)
@@ -250,7 +251,19 @@ class VolumePlotOptionDialog(QDialog):
         self.setWindowIcon(QIcon(':/png/icon/volume_option.png'))
         self.setupUi(self)
 
+        # data init
+        self.comboBox_style.addItems(["surface", "points", "wireframe"])
+
+        self.zoneNames = zoneNames
+        self.comboBox_variable.addItems(varNames)
+        qlm = QStringListModel(zoneNames)
+        self.list_zone_surface.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.list_zone_surface.setModel(qlm)
+        self.list_zone_surface.setCurrentIndex(qlm.index(0, 0))
+
+        # draw call back function
         self.draw_handler = call_back_draw
+
         self.init_widget()
 
     def init_widget(self):
@@ -261,8 +274,19 @@ class VolumePlotOptionDialog(QDialog):
 
     def displayAction(self):
         data = {
-                "voxel_size": self.horizontalSlider.value()/1000,
-                "opacity": self.doubleSpinBox.value(),
+            "name": self.text_plot_name.text(),
+            "style": self.comboBox_style.currentText(),
+            "mesh": self.checkBox_grid.isChecked(),
+            "smooth": self.checkBox_smooth.isChecked(),
+            "log_scale": self.checkBox_log.isChecked(),
+            "colormap": self.comb_colormap_style.currentText(),
+            "colormapsize": self.spin_colormap.value(),
+
+            "varName": self.comboBox_variable.currentText(),
+            "zoneName": [item.data() for item in self.list_zone_surface.selectedIndexes()],
+
+            "voxel_size": self.horizontalSlider.value()/1000,
+            "opacity": self.doubleSpinBox.value(),
                 }
         self.draw_handler(data)
 

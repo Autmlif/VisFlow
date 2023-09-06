@@ -25,6 +25,7 @@ from pyvistaqt import QtInteractor, MainWindow
 
 from scipy.spatial import KDTree
 
+
 class VisWindow(MainWindow):
 
     def __init__(self, parent=None):
@@ -45,7 +46,6 @@ class VisWindow(MainWindow):
         # self.plotter = exampleDetails.plotter
         vlayout.addWidget(self.plotter.interactor)
         self.signal_close.connect(self.plotter.close)
-
 
         self.frame.setLayout(vlayout)
         self.setCentralWidget(self.frame)
@@ -81,7 +81,7 @@ class VisWindow(MainWindow):
             self.cDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
             self.cDemo.show()
         elif draw_type == 'volume':
-            self.vDemo = VolumePlotOptionDialog(call_back_draw=self.paint_volume)
+            self.vDemo = VolumePlotOptionDialog(varNames=varNames, zoneNames=zonenames, call_back_draw=self.paint_volume)
             self.vDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
             self.vDemo.show()
 
@@ -92,7 +92,7 @@ class VisWindow(MainWindow):
         self.scalar_bar_args = dict(
             interactive=True, title_font_size=20, label_font_size=16,
             shadow=True, n_labels=data['colormapsize'],
-            italic=True,  font_family="arial",
+            italic=True, font_family="arial",
             width=0.01, height=0.5
         )
         self.plotter.clear()
@@ -107,11 +107,10 @@ class VisWindow(MainWindow):
             # voxels["density"] = data["varName"]
             # glyphs = voxels.glyph(factor=1e-3, geom=pv.Arrow())
 
-
-            #self.plotter.add_mesh(voxels, color=True, show_edges=True, opacity=0.25)
+            # self.plotter.add_mesh(voxels, color=True, show_edges=True, opacity=0.25)
             # self.plotter.add_mesh(contours, color=True, show_edges=True, opacity=0.5)
-            #slices = mesh.slice_orthogonal(x=0.5, y=0.5, z=0.5)
-            #self.plotter.add_mesh(slices, cmap=mpl.colormaps[data["colormap"]])
+            # slices = mesh.slice_orthogonal(x=0.5, y=0.5, z=0.5)
+            # self.plotter.add_mesh(slices, cmap=mpl.colormaps[data["colormap"]])
             # mesh['scalars']=data["varName"]
 
             # slices = mesh.slice_orthogonal()
@@ -119,18 +118,17 @@ class VisWindow(MainWindow):
             #                       log_scale=data['log_scale'], style=data['style'],
             #                       smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
 
-
             self.plotter.add_mesh(mesh, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
                                   log_scale=data['log_scale'], style=data['style'],
                                   smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
             # self.plotter.add_volume(mesh)
-            #self.plotter.add_mesh(contours,  opacity=0.25)
+            # self.plotter.add_mesh(contours,  opacity=0.25)
             # self.plotter.add_volume(mesh, cmap=mpl.colormaps[data["colormap"]],
             #                         diffuse=1, log_scale=data['log_scale'],
             #                         e=0.0001)
         # self.plotter.add_mesh_slice(mesh, normal='z')
 
-        #self.mesh_range = [math.floor(min(mesh_range_min)), math.ceil(max(mesh_range_max))]
+        # self.mesh_range = [math.floor(min(mesh_range_min)), math.ceil(max(mesh_range_max))]
 
         self.plotter.reset_camera()
         self.mesh_drawn = 1
@@ -154,7 +152,7 @@ class VisWindow(MainWindow):
             scalar_min = mesh.active_scalars.min()
             scalar_max = mesh.active_scalars.max()
             unit_range = (scalar_min + scalar_max) / 10  # 每一格的数据量
-            clim_range = [scalar_min+unit_range*data['iso_range'][0], scalar_min+unit_range*data['iso_range'][1]]
+            clim_range = [scalar_min + unit_range * data['iso_range'][0], scalar_min + unit_range * data['iso_range'][1]]
 
             mesh_points = mesh.cell_data_to_point_data()
             contours = mesh_points.contour(data['iso_numbers']) if data['specify_iso'] else mesh_points.contour()
@@ -165,16 +163,28 @@ class VisWindow(MainWindow):
 
     def paint_volume(self, data):
         print(data)
+
+        self.scalar_bar_args = dict(
+            interactive=True, title_font_size=20, label_font_size=16,
+            shadow=True, n_labels=data['colormapsize'],
+            italic=True, font_family="arial",
+            width=0.01, height=0.5
+        )
         self.plotter.clear()
-        for mesh in self.mesh_data:
-            voxels = calculate_neighbours(mesh, data['voxel_size'])
-            self.plotter.add_mesh(voxels, opacity=data['opacity'], scalar_bar_args=self.scalar_bar_args)
+
+        for zoneName in data["zoneName"]:
+            mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
+            mesh.set_active_scalars(data["varName"], preference='cell')  # 切换不同的变量，即不同的场
+            # voxels = calculate_neighbours(mesh, data['voxel_size'])
+            voxels = pv.voxelize(mesh, density=data['voxel_size'], check_surface=False)
+            self.plotter.add_mesh(voxels, scalars=['active_scalars'], opacity=data['opacity'], scalar_bar_args=self.scalar_bar_args)
         self.plotter.reset_camera()
+
 
 # 计算体素半径
 def calculate_sphere_radius(voxel_size):
     voxel_volume = voxel_size ** 3
-    radius = ((3*voxel_volume)/(4*np.pi))**(1/3)
+    radius = ((3 * voxel_volume) / (4 * np.pi)) ** (1 / 3)
     return radius
 
 
@@ -190,16 +200,17 @@ def calculate_neighbours(mesh, voxel_size=0.01):
     # Call the sphere radius function and calculate the new radius
     radius = calculate_sphere_radius(voxel_size)
     # Use the calculated KDTree and radius to get the neighbors for each voxel center
-    neighbours = kd_tree_vertices.query_ball_point(voxel_centers,radius)
+    neighbours = kd_tree_vertices.query_ball_point(voxel_centers, radius)
     # Count the number of points for each voxel center
     neighbour_count = [len(curr_neighbours) for curr_neighbours in neighbours]
     # Cast to array and normalize between 0 and 1
     neighbour_count = np.array(neighbour_count, dtype=np.float32)
-    neighbour_density =  neighbour_count/neighbour_count.max()
+    neighbour_density = neighbour_count / neighbour_count.max()
     # Add the density as a field to the voxels
     voxels['v_density'] = neighbour_density
 
     return voxels
+
 
 if __name__ == '__main__':
     # app = QtWidgets.QApplication(sys.argv)
