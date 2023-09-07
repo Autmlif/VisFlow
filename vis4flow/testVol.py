@@ -13,6 +13,7 @@ from qtpy import QtWidgets
 
 from pyvistaqt import QtInteractor, MainWindow
 
+
 class MyMainWindow(MainWindow):
 
     def __init__(self, parent=None):
@@ -39,12 +40,18 @@ class MyMainWindow(MainWindow):
         self.draw_action_3 = QtWidgets.QAction('Volume', self)
         self.draw_action_3.triggered.connect(lambda: self.drawAction("volume"))
         meshMenu.addAction(self.draw_action_3)
+
+        self.draw_action_4 = QtWidgets.QAction('Slice', self)
+        self.draw_action_4.triggered.connect(lambda: self.drawAction("slice"))
+        meshMenu.addAction(self.draw_action_4)
+
         # self.drawAction()
 
         self.show()
 
     def drawAction(self, mesh):
         self.visWin.drawDialg(mesh)
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

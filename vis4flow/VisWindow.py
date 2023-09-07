@@ -10,9 +10,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 os.environ["QT_API"] = "pyqt5"
 import TecplotSzplt as tecplt
-from visDialog import MeshOptionDialog
-from visDialog import ContoursDataPlotOptionDialog
-from visDialog import VolumePlotOptionDialog
+from visDialog import MeshOptionDialog, ContoursDataPlotOptionDialog, VolumePlotOptionDialog, SlicePlotOptionDialog
 
 from qtpy import QtWidgets
 
@@ -34,7 +32,6 @@ class VisWindow(MainWindow):
         # check whether the mesh has been drawn.
         self.mesh_range = None
         self.scalar_bar_args = None
-        self.mesh_drawn = 0
         self.mesh_data = None
 
         # create the frame
@@ -78,12 +75,17 @@ class VisWindow(MainWindow):
             #     msg_box = QMessageBox(QMessageBox.Information, '提示', '请先选择绘制的场和变量。')
             #     msg_box.exec_()
             self.cDemo = ContoursDataPlotOptionDialog(varNames=varNames, zoneNames=zonenames, call_back_draw=self.paint_contour)
-            self.cDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
+            # self.cDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
             self.cDemo.show()
         elif draw_type == 'volume':
             self.vDemo = VolumePlotOptionDialog(varNames=varNames, zoneNames=zonenames, call_back_draw=self.paint_volume)
-            self.vDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
+            # self.vDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
             self.vDemo.show()
+
+        elif draw_type == 'slice':
+            self.sDemo = SlicePlotOptionDialog(varNames=varNames, zoneNames=zonenames, call_back_draw=self.paint_slice)
+            # self.vDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
+            self.sDemo.show()
 
     def paint_mesh(self, data):
         # data = {"name","filled","mesh","smooth","colormap","colormapsize","varName","zoneName"}
@@ -131,7 +133,6 @@ class VisWindow(MainWindow):
         # self.mesh_range = [math.floor(min(mesh_range_min)), math.ceil(max(mesh_range_max))]
 
         self.plotter.reset_camera()
-        self.mesh_drawn = 1
 
     def paint_contour(self, data):
         print(data)
@@ -177,7 +178,29 @@ class VisWindow(MainWindow):
             mesh.set_active_scalars(data["varName"], preference='cell')  # 切换不同的变量，即不同的场
             # voxels = calculate_neighbours(mesh, data['voxel_size'])
             voxels = pv.voxelize(mesh, density=data['voxel_size'], check_surface=False)
-            self.plotter.add_mesh(voxels, scalars=['active_scalars'], opacity=data['opacity'], scalar_bar_args=self.scalar_bar_args)
+            self.plotter.add_mesh(voxels, opacity=data['opacity'], scalar_bar_args=self.scalar_bar_args)
+        self.plotter.reset_camera()
+
+    def paint_slice(self, data):
+        # data = {"name","filled","mesh","smooth","colormap","colormapsize","varName","zoneName"}
+        print(data)
+
+        self.scalar_bar_args = dict(
+            interactive=True, title_font_size=20, label_font_size=16,
+            shadow=True, n_labels=data['colormapsize'],
+            italic=True, font_family="arial",
+            width=0.01, height=0.5
+        )
+        self.plotter.clear()
+
+        for zoneName in data["zoneName"]:
+            mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
+            mesh.set_active_scalars(data["varName"], preference='cell')  # 切换不同的变量，即不同的场
+
+            self.plotter.add_mesh(mesh, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
+                                  log_scale=data['log_scale'], style=data['style'],
+                                  smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
+
         self.plotter.reset_camera()
 
 
