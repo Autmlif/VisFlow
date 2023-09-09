@@ -66,6 +66,7 @@ class VisWindow(MainWindow):
 
         zonenames = self.tecData.getZoneNames()
         varNames = self.tecData.getVarNames()
+
         if draw_type == 'mesh':
             self.mDemo = MeshOptionDialog(varNames=varNames, zoneNames=zonenames, call_back_draw=self.paint_mesh)
             self.mDemo.setWindowFlag(Qt.WindowStaysOnTopHint)
@@ -98,6 +99,12 @@ class VisWindow(MainWindow):
             width=0.01, height=0.5
         )
         self.plotter.clear()
+
+        self.plotter.show_bounds(n_xlabels=3, n_ylabels=3, n_zlabels=2, font_size=10, ticks='both',
+                                 grid='front',
+                                 location='outer',
+                                 all_edges=True,
+                                 )
 
         for zoneName in data["zoneName"]:
             mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
@@ -145,6 +152,12 @@ class VisWindow(MainWindow):
         )
         self.plotter.clear()
 
+        self.plotter.show_bounds(n_xlabels=3, n_ylabels=3, n_zlabels=2, font_size=10, ticks='both',
+                                 grid='front',
+                                 location='outer',
+                                 all_edges=True,
+                                 )
+
         for zoneName in data["zoneName"]:
             mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
             mesh.set_active_scalars(data["varName"], preference='cell')  # 切换不同的变量，即不同的场
@@ -157,9 +170,13 @@ class VisWindow(MainWindow):
 
             mesh_points = mesh.cell_data_to_point_data()
             contours = mesh_points.contour(data['iso_numbers']) if data['specify_iso'] else mesh_points.contour()
-            self.plotter.add_mesh(contours, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
-                                  log_scale=data['log_scale'], style=data['style'],
-                                  smooth_shading=data['smooth'], opacity=data['opacity'], clim=clim_range, scalar_bar_args=self.scalar_bar_args)
+            if contours.n_points <= 1:
+                msg_box = QMessageBox(QMessageBox.Information, '提示', '绘制所需的点过少！')
+                msg_box.exec_()
+            else:
+                self.plotter.add_mesh(contours, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
+                                      log_scale=data['log_scale'], style=data['style'],
+                                      smooth_shading=data['smooth'], opacity=data['opacity'], clim=clim_range, scalar_bar_args=self.scalar_bar_args)
         self.plotter.reset_camera()
 
     def paint_volume(self, data):
@@ -172,6 +189,12 @@ class VisWindow(MainWindow):
             width=0.01, height=0.5
         )
         self.plotter.clear()
+
+        self.plotter.show_bounds(n_xlabels=3, n_ylabels=3, n_zlabels=2, font_size=10, ticks='both',
+                                 grid='front',
+                                 location='outer',
+                                 all_edges=True,
+                                 )
 
         for zoneName in data["zoneName"]:
             mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
@@ -192,15 +215,16 @@ class VisWindow(MainWindow):
         )
         self.plotter.clear()
 
+        self.plotter.show_bounds(n_xlabels=3, n_ylabels=3, n_zlabels=2, font_size=10, ticks='both',
+                                 grid='front',
+                                 location='outer',
+                                 all_edges=True,
+                                 )
+
         for zoneName in data["zoneName"]:
             mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
             mesh.set_active_scalars(data["varName"], preference='cell')  # 切换不同的变量，即不同的场
 
-            self.plotter.show_bounds(n_xlabels=3, n_ylabels=3, n_zlabels=2, font_size=10, ticks='both',
-                                     grid='front',
-                                     location='outer',
-                                     all_edges=True,
-                                     )
             if data['sliceType'] == 'orthogonality':
                 slices = mesh.slice_orthogonal(contour=True)
                 self.plotter.add_mesh(slices, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],

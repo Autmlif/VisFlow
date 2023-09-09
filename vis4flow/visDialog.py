@@ -45,7 +45,7 @@ class ContoursDataPlotOptionDialog(QDialog):
 
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(556, 693)
+        Form.resize(550, 693)
         self.verticalLayout_entirety = QtWidgets.QVBoxLayout(Form)
         self.verticalLayout_entirety.setObjectName("verticalLayout_entirety")
 
@@ -209,7 +209,7 @@ class ContoursDataPlotOptionDialog(QDialog):
         self.groupBox.setTitle(_translate("Form", "等值面"))
         self.checkBox_2.setText(_translate("Form", "指定等值面数量"))
         self.checkBox_3.setText(_translate("Form", "颜色条范围"))
-        self.label_2.setText(_translate("Form", "筛选方法"))
+        self.label_2.setText(_translate("Form", "等值面算法"))
         self.comboBox.setItemText(0, _translate("Form", "contour"))
         self.comboBox.setItemText(1, _translate("Form", "marching_cubes"))
         self.comboBox.setItemText(2, _translate("Form", "flying_edges"))
@@ -292,7 +292,7 @@ class VolumePlotOptionDialog(QDialog):
 
     def setupUi(self, volume_window):
         volume_window.setObjectName("volume_window")
-        # volume_window.resize(373, 190)
+        volume_window.resize(550, 600)
 
         self.verticalLayout_entirety = QtWidgets.QVBoxLayout(volume_window)
         self.verticalLayout_entirety.setObjectName("verticalLayout_entirety")
@@ -483,6 +483,8 @@ class SlicePlotOptionDialog(QDialog):
         self.sliceOption_group.addButton(self.radioButton_ortho)
         self.sliceOption_group.addButton(self.radioButton_origin)
         self.sliceOption_group.addButton(self.radioButton_along)
+        self.sliceOption_group.addButton(self.radioButton_mesh)
+        self.radioButton_mesh.setChecked(True)
 
         doubleValidator = QDoubleValidator()
         doubleValidator.setNotation(QDoubleValidator.StandardNotation)
@@ -490,9 +492,6 @@ class SlicePlotOptionDialog(QDialog):
         self.lineEdit_origin_x.setValidator(doubleValidator)
         self.lineEdit_origin_y.setValidator(doubleValidator)
         self.lineEdit_origin_z.setValidator(doubleValidator)
-        self.lineEdit_normal_x.setValidator(doubleValidator)
-        self.lineEdit_normal_y.setValidator(doubleValidator)
-        self.lineEdit_normal_z.setValidator(doubleValidator)
 
     def displayAction(self):
         data = {
@@ -517,12 +516,14 @@ class SlicePlotOptionDialog(QDialog):
             self.slice_type = "origin_specified"
         elif self.sliceOption_group.checkedButton() == self.radioButton_along:
             self.slice_type = "along_axis"
+        elif self.sliceOption_group.checkedButton() == self.radioButton_mesh:
+            self.slice_type = "mesh"
         data['sliceType'] = self.slice_type
 
         # 切片参数
         if self.slice_type == "origin_specified":
             origin = [self.lineEdit_origin_x.text(), self.lineEdit_origin_y.text(), self.lineEdit_origin_z.text()]
-            normal = [self.lineEdit_normal_x.text(), self.lineEdit_normal_y.text(), self.lineEdit_normal_z.text()]
+            normal = [self.comboBox_normal_x.currentText(), self.comboBox_normal_y.currentText(), self.comboBox_normal_z.currentText()]
             data['origin'] = list(map(float, origin))
             data['normal'] = list(map(int, normal))
         if self.slice_type == "along_axis":
@@ -538,7 +539,7 @@ class SlicePlotOptionDialog(QDialog):
 
     def setupUi(self, slice_window):
         slice_window.setObjectName("slice_window")
-        slice_window.resize(510, 855)
+        slice_window.resize(550, 855)
 
         # 第一行
         self.verticalLayout_6 = QtWidgets.QVBoxLayout(slice_window)
@@ -621,6 +622,10 @@ class SlicePlotOptionDialog(QDialog):
         self.Slice_GroupBox.setObjectName("Slice_GroupBox")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.Slice_GroupBox)
         self.verticalLayout.setObjectName("verticalLayout")
+
+        self.radioButton_mesh = QtWidgets.QRadioButton(self.Slice_GroupBox)
+        self.radioButton_mesh.setObjectName("radioButton_mesh")
+        self.verticalLayout.addWidget(self.radioButton_mesh)
         self.radioButton_ortho = QtWidgets.QRadioButton(self.Slice_GroupBox)
         self.radioButton_ortho.setObjectName("radioButton_ortho")
         self.verticalLayout.addWidget(self.radioButton_ortho)
@@ -675,33 +680,38 @@ class SlicePlotOptionDialog(QDialog):
         spacerItem3 = QtWidgets.QSpacerItem(18, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem3)
         self.label_7 = QtWidgets.QLabel(self.Slice_GroupBox)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.label_7.sizePolicy().hasHeightForWidth())
-        self.label_7.setSizePolicy(sizePolicy)
+        # sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
+        # sizePolicy.setHorizontalStretch(0)
+        # sizePolicy.setVerticalStretch(0)
+        # sizePolicy.setHeightForWidth(self.label_7.sizePolicy().hasHeightForWidth())
+        # self.label_7.setSizePolicy(sizePolicy)
         self.label_7.setObjectName("label_7")
         self.horizontalLayout_2.addWidget(self.label_7)
-        self.lineEdit_normal_x = QtWidgets.QLineEdit(self.Slice_GroupBox)
+        self.comboBox_normal_x = QtWidgets.QComboBox(self.Slice_GroupBox)
+        self.comboBox_normal_x.addItems(["0", "1"])
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.lineEdit_normal_x.sizePolicy().hasHeightForWidth())
-        self.lineEdit_normal_x.setSizePolicy(sizePolicy)
-        self.lineEdit_normal_x.setObjectName("lineEdit_normal_x")
-        self.horizontalLayout_2.addWidget(self.lineEdit_normal_x)
+        sizePolicy.setHeightForWidth(self.comboBox_normal_x.sizePolicy().hasHeightForWidth())
+        self.comboBox_normal_x.setSizePolicy(sizePolicy)
+        self.comboBox_normal_x.setObjectName("comboBox_normal_x")
+        self.horizontalLayout_2.addWidget(self.comboBox_normal_x)
         self.label_8 = QtWidgets.QLabel(self.Slice_GroupBox)
         self.label_8.setObjectName("label_8")
         self.horizontalLayout_2.addWidget(self.label_8)
-        self.lineEdit_normal_y = QtWidgets.QLineEdit(self.Slice_GroupBox)
-        self.lineEdit_normal_y.setObjectName("lineEdit_normal_y")
-        self.horizontalLayout_2.addWidget(self.lineEdit_normal_y)
+        self.comboBox_normal_y = QtWidgets.QComboBox(self.Slice_GroupBox)
+        self.comboBox_normal_y.addItems(["0", "1"])
+        self.comboBox_normal_y.setObjectName("comboBox_normal_y")
+        self.comboBox_normal_y.setSizePolicy(sizePolicy)
+        self.horizontalLayout_2.addWidget(self.comboBox_normal_y)
         self.label_9 = QtWidgets.QLabel(self.Slice_GroupBox)
         self.label_9.setObjectName("label_9")
         self.horizontalLayout_2.addWidget(self.label_9)
-        self.lineEdit_normal_z = QtWidgets.QLineEdit(self.Slice_GroupBox)
-        self.lineEdit_normal_z.setObjectName("lineEdit_normal_z")
-        self.horizontalLayout_2.addWidget(self.lineEdit_normal_z)
+        self.comboBox_normal_z = QtWidgets.QComboBox(self.Slice_GroupBox)
+        self.comboBox_normal_z.addItems(["0", "1"])
+        self.comboBox_normal_z.setObjectName("comboBox_normal_z")
+        self.horizontalLayout_2.addWidget(self.comboBox_normal_z)
+        self.comboBox_normal_z.setSizePolicy(sizePolicy)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
         self.radioButton_along = QtWidgets.QRadioButton(self.Slice_GroupBox)
         self.radioButton_along.setObjectName("radioButton_along")
@@ -781,13 +791,14 @@ class SlicePlotOptionDialog(QDialog):
         self.label_15.setText(_translate("slice_window", "变量"))
         self.label_16.setText(_translate("slice_window", "Zone"))
         self.Slice_GroupBox.setTitle(_translate("slice_window", "Slicing"))
+        self.radioButton_mesh.setText(_translate("slice_window", "不切片"))
         self.radioButton_ortho.setText(_translate("slice_window", "正交切片"))
         self.radioButton_origin.setText(_translate("slice_window", "指定位置切片"))
         self.label.setText(_translate("slice_window", "原点"))
         self.label_2.setText(_translate("slice_window", "x"))
         self.label_3.setText(_translate("slice_window", "y"))
         self.label_5.setText(_translate("slice_window", "z"))
-        self.label_6.setText(_translate("slice_window", "法线"))
+        self.label_6.setText(_translate("slice_window", "法向量方向"))
         self.label_7.setText(_translate("slice_window", "x"))
         self.label_8.setText(_translate("slice_window", "y"))
         self.label_9.setText(_translate("slice_window", "z"))
