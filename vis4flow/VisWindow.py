@@ -176,8 +176,7 @@ class VisWindow(MainWindow):
         for zoneName in data["zoneName"]:
             mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
             mesh.set_active_scalars(data["varName"], preference='cell')  # 切换不同的变量，即不同的场
-            # voxels = calculate_neighbours(mesh, data['voxel_size'])
-            voxels = pv.voxelize(mesh, density=data['voxel_size'], check_surface=False)
+            voxels = calculate_neighbours(mesh, data['voxel_size'])
             self.plotter.add_mesh(voxels, opacity=data['opacity'], scalar_bar_args=self.scalar_bar_args)
         self.plotter.reset_camera()
 
@@ -197,10 +196,31 @@ class VisWindow(MainWindow):
             mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
             mesh.set_active_scalars(data["varName"], preference='cell')  # 切换不同的变量，即不同的场
 
-            self.plotter.add_mesh(mesh, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
-                                  log_scale=data['log_scale'], style=data['style'],
-                                  smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
+            self.plotter.show_bounds(n_xlabels=3, n_ylabels=3, n_zlabels=2, font_size=10, ticks='both',
+                                     grid='front',
+                                     location='outer',
+                                     all_edges=True,
+                                     )
+            if data['sliceType'] == 'orthogonality':
+                slices = mesh.slice_orthogonal(contour=True)
+                self.plotter.add_mesh(slices, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
+                                      log_scale=data['log_scale'], style=data['style'],
+                                      smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
+            elif data['sliceType'] == 'origin_specified':
 
+                slices = mesh.slice(normal=data['normal'], origin=data['origin'])
+                self.plotter.add_mesh(slices, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
+                                      log_scale=data['log_scale'], style=data['style'],
+                                      smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
+            elif data['sliceType'] == 'along_axis':
+                slices = mesh.slice_along_axis(n=data['slice_num'], axis=data['axis'])
+                self.plotter.add_mesh(slices, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
+                                      log_scale=data['log_scale'], style=data['style'],
+                                      smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
+            else:
+                self.plotter.add_mesh(mesh, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
+                                      log_scale=data['log_scale'], style=data['style'],
+                                      smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
         self.plotter.reset_camera()
 
 

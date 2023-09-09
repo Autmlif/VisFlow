@@ -428,7 +428,7 @@ class VolumePlotOptionDialog(QDialog):
 
     def retranslateUi(self, volume_window):
         _translate = QtCore.QCoreApplication.translate
-        volume_window.setWindowTitle(_translate("volume_window", "Form"))
+        volume_window.setWindowTitle(_translate("volume_window", "Volume"))
 
         self.le_name.setText(_translate("Form", "绘图名"))
         self.groupBox_2.setTitle(_translate("Form", "绘图选项"))
@@ -455,6 +455,7 @@ class SlicePlotOptionDialog(QDialog):
         # self.setMinimumSize(500, 450)
         # self.setMaximumSize(700, 650)
         # self.resize(550, 500)
+        self.sliceOption_group = None
         self.slice_type = None
         self.absolute_path = os.path.split(sys.argv[0])[0]
         self.setWindowIcon(QIcon(':/png/icon/slice_option.png'))
@@ -478,16 +479,10 @@ class SlicePlotOptionDialog(QDialog):
     def init_widget(self):
         self.pushButton.clicked.connect(self.displayAction)
 
-        sliceOption_group = QButtonGroup(self)
-        sliceOption_group.addButton(self.radioButton_ortho)
-        sliceOption_group.addButton(self.radioButton_origin)
-        sliceOption_group.addButton(self.radioButton_along)
-        if sliceOption_group.checkedButton() == self.radioButton_ortho:
-            self.slice_type = "orthogonality"
-        elif sliceOption_group.checkedButton() == self.radioButton_origin:
-            self.slice_type = "origin_specified"
-        elif sliceOption_group.checkedButton() == self.radioButton_origin:
-            self.slice_type = "along_axis"
+        self.sliceOption_group = QButtonGroup(self)
+        self.sliceOption_group.addButton(self.radioButton_ortho)
+        self.sliceOption_group.addButton(self.radioButton_origin)
+        self.sliceOption_group.addButton(self.radioButton_along)
 
         doubleValidator = QDoubleValidator()
         doubleValidator.setNotation(QDoubleValidator.StandardNotation)
@@ -512,9 +507,33 @@ class SlicePlotOptionDialog(QDialog):
             "varName": self.comboBox_variable.currentText(),
             "zoneName": [item.data() for item in self.list_zone_surface.selectedIndexes()],
 
-            "sliceType": self.slice_type
-
+            "opacity": self.SpinBox_opacity.value()
                 }
+
+        # 切片类型
+        if self.sliceOption_group.checkedButton() == self.radioButton_ortho:
+            self.slice_type = "orthogonality"
+        elif self.sliceOption_group.checkedButton() == self.radioButton_origin:
+            self.slice_type = "origin_specified"
+        elif self.sliceOption_group.checkedButton() == self.radioButton_along:
+            self.slice_type = "along_axis"
+        data['sliceType'] = self.slice_type
+
+        # 切片参数
+        if self.slice_type == "origin_specified":
+            origin = [self.lineEdit_origin_x.text(), self.lineEdit_origin_y.text(), self.lineEdit_origin_z.text()]
+            normal = [self.lineEdit_normal_x.text(), self.lineEdit_normal_y.text(), self.lineEdit_normal_z.text()]
+            data['origin'] = list(map(float, origin))
+            data['normal'] = list(map(int, normal))
+        if self.slice_type == "along_axis":
+            if self.comboBox_axis.currentText() == 'X轴':
+                data['axis'] = 'x'
+            elif self.comboBox_axis.currentText() == 'Y轴':
+                data['axis'] = 'y'
+            elif self.comboBox_axis.currentText() == 'Z轴':
+                data['axis'] = 'z'
+            data['slice_num'] = self.spinBox_sliceNum.value()
+
         self.draw_handler(data)
 
     def setupUi(self, slice_window):
@@ -750,7 +769,7 @@ class SlicePlotOptionDialog(QDialog):
 
     def retranslateUi(self, slice_window):
         _translate = QtCore.QCoreApplication.translate
-        slice_window.setWindowTitle(_translate("slice_window", "Form"))
+        slice_window.setWindowTitle(_translate("slice_window", "Slice"))
         self.label_le_name.setText(_translate("slice_window", "绘图名"))
         self.groupBox_2.setTitle(_translate("slice_window", "绘图选项"))
         self.checkBox_grid.setText(_translate("slice_window", "显示网格"))
