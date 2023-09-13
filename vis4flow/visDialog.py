@@ -441,8 +441,8 @@ class VolumePlotOptionDialog(QDialog):
         self.label_3.setText(_translate("Form", "变量"))
         self.label_5.setText(_translate("Form", "Zone"))
 
-        self.Voxel_GroupBox.setTitle(_translate("volume_window", "Voxelize"))
-        self.label.setText(_translate("volume_window", "Voxel Size"))
+        self.Voxel_GroupBox.setTitle(_translate("volume_window", "Volume Rendering"))
+        self.label.setText(_translate("volume_window", "不透明度单位距离"))
         self.label_2.setText(_translate("volume_window", "0.1"))
         self.label_4.setText(_translate("volume_window", "透明度"))
         self.pushButton.setText(_translate("volume_window", "绘制"))

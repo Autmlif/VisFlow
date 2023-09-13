@@ -130,11 +130,6 @@ class VisWindow(MainWindow):
             self.plotter.add_mesh(mesh, show_edges=data['mesh'], cmap=mpl.colormaps[data["colormap"]],
                                   log_scale=data['log_scale'], style=data['style'],
                                   smooth_shading=data['smooth'], scalar_bar_args=self.scalar_bar_args)
-            # self.plotter.add_volume(mesh)
-            # self.plotter.add_mesh(contours,  opacity=0.25)
-            # self.plotter.add_volume(mesh, cmap=mpl.colormaps[data["colormap"]],
-            #                         diffuse=1, log_scale=data['log_scale'],
-            #                         e=0.0001)
         # self.plotter.add_mesh_slice(mesh, normal='z')
 
         # self.mesh_range = [math.floor(min(mesh_range_min)), math.ceil(max(mesh_range_max))]
@@ -190,17 +185,18 @@ class VisWindow(MainWindow):
         )
         self.plotter.clear()
 
-        self.plotter.show_bounds(n_xlabels=3, n_ylabels=3, n_zlabels=2, font_size=10, ticks='both',
-                                 grid='front',
-                                 location='outer',
-                                 all_edges=True,
-                                 )
+        # self.plotter.show_bounds(n_xlabels=3, n_ylabels=3, n_zlabels=2, font_size=10, ticks='both',
+        #                          grid='front',
+        #                          location='outer',
+        #                          all_edges=True,
+        #                          )
 
         for zoneName in data["zoneName"]:
             mesh = self.tecData.getZoneVista(zoneName)  # 切换不同的zone
             mesh.set_active_scalars(data["varName"], preference='cell')  # 切换不同的变量，即不同的场
-            voxels = calculate_neighbours(mesh, data['voxel_size'])
-            self.plotter.add_mesh(voxels, opacity=data['opacity'], scalar_bar_args=self.scalar_bar_args)
+            # voxels = calculate_neighbours(mesh, data['voxel_size'])
+            # self.plotter.add_mesh(voxels, opacity=data['opacity'], scalar_bar_args=self.scalar_bar_args)
+            self.plotter.add_volume(mesh, opacity_unit_distance=0.05)
         self.plotter.reset_camera()
 
     def paint_slice(self, data):
